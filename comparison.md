@@ -1,4 +1,4 @@
-| Feature            | iPhone 6s         | OnePlus Q0T       |
+| Feature            | iPhone 6s         | OnePlus 10T       |
 |--------------------|-------------------|-------------------|
 | Display            | 4.7" Retina HD    | Data unavailable* |
 | Processor          | Apple A9          | Data unavailable* |

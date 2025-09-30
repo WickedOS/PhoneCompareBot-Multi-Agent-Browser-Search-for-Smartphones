@@ -52,9 +52,15 @@ async def online_search(
     agent = BrowserAgent(
         task=f"Find detailed specifications and features of {query} and return structured data.",
         llm=llm,
-        browser=Browser()
+        browser=Browser(headless=False, devtools=True)
     )
-    history = await agent.run()
+    print("[online_search] Launching browser (non-headless, devtools open) via Playwright...")
+    try:
+        history = await agent.run()
+    except Exception as e:
+        # Surface a clear, short error so the user knows why the browser didn't open
+        print(f"[online_search] Browser agent failed to run: {e}")
+        return f"ERROR: browser_run_failed: {e}"
     
     ## update the context with the extracted content
     if context.context.phoneModel1FeatureData == "":
@@ -85,19 +91,18 @@ online_search_agent = Agent[MobileComparisonContext](
 # 2. Triage Agent
 triage_agent = Agent[MobileComparisonContext](
     name="Triage Agent",
-    handoff_description="An agent that delegates tasks to the correct sub-agents.",
+    handoff_description="An agent that coordinates and directly calls tools to retrieve specs.",
     instructions="""
-    You are a Triage Agent. Your goal is to coordinate the process of phone model comparison. You have to 
-    delegate tasks to the Online Search Agent. 
-    # Sequence:
-    1. Receive two phone model names from the user.
-    2. Handoff the first phone model to the `Online Search Agent`.
-    3. Handoff the second phone model to the `Online Search Agent`.
-    4. Return the proper comparison in table form in markdown format string.
-    
-    
+    You are a Triage Agent. Your goal is to coordinate the process of phone model comparison.
+
+    Sequence:
+    1. Read the two phone model names from the context (phoneModel1 and phoneModel2).
+    2. Call the `online_search` tool with the first phone model name.
+    3. Call the `online_search` tool with the second phone model name.
+    4. Using the information returned by the tool calls (and the context fields), produce a concise markdown table comparing the key specifications and features.
+    5. Return only the markdown as the final output.
     """,
-    handoffs=[online_search_agent],
+    tools=[online_search],
 )
 
 
